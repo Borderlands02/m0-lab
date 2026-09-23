@@ -4,7 +4,7 @@
 写之前先在纸上想清楚：这个函数拿到什么、返回什么、坏输入会走到哪条分支。
 """
 from __future__ import annotations
-
+import json
 from pathlib import Path
 
 
@@ -27,7 +27,26 @@ def load_records(paths: list[Path]) -> tuple[list[dict], list[str]]:
       - 两种跳过都要进第二个返回值，并且打印一行说明是哪种情况。
     这一步**不要**清洗，记录保持原样。
     """
-    raise NotImplementedError
+    records = []
+    skipped = []
+    for file_path in paths:
+        name = file_path.name
+
+        try:
+            text = file_path.read_text(encoding="utf-8")
+            data = json.loads(text)
+        except json.JSONDecodeError:
+            print(f"跳过文件 {name}: JSON解析失败")
+            skipped.append(name)
+            continue
+
+        if not isinstance(data, list):
+            print(f"跳过文件 {name}: JSON顶层不是列表")
+            skipped.append(name)
+            continue
+        
+        records.extend(data)
+    return records,skipped
 
 
 def clean(records: list[dict]) -> tuple[list[dict], dict]:
