@@ -1,0 +1,42 @@
+[
+  {
+    "order_id": "B-2001",
+    "user": "carol",
+    "qty": 4,
+    "price": 12.5,
+    "amount": 50.0,
+    "created_at": "2026-07-01 12:00"
+  },
+  {
+    "order_id": "B-2002",
+    "user": "dave",
+    "qty": 2,
+    "price": 7.0,
+    "amount": "14.0",
+    "created_at": "2026-07-02"
+  },
+  {
+    "order_id": "B-2003",
+    "user": "alice",
+    "qty": 1,
+    "price": 120.0,
+    "amount": 120.0,
+    "created_at": "2026-07-03T20:15:00"
+  },
+  {
+    "order_id": "B-2004",
+    "user": "bob",
+    "qty": 2,
+    "price": 3.0,
+    "amount": null,
+    "created_at": "bad-date"
+  },
+  {
+    "order_id": "B-2005",
+    "user": "erin",
+    "qty": 3,
+    "price": 9.9,
+    "amount": 29.7,
+    "created_at": "2026-07-05"
+  }
+]
