@@ -1,12 +1,27 @@
 # 卡点与三行笔记
 
 每天结束时填，一天一节。**第三行写不出来，就说明这天白过了。**
+格式照 Day 1：第三行必须是「**信号 → 动作**」，不要只写状态。
 
-## Day 1
+## Day 1 · 2026-09-23 · 忙碌日 · 预算 3h / 实到约 3h
 
-- 关键洞察：看README文档
-- 我卡在哪（具体到函数和那一次报错的原文）：find_data_files没返回值,load_records中`read_text`、`json.loads`、`try/except json.JSONDecodeError`、isinstance(obj, list)`,append(),extend(),这些都不了解.还有填入的类型不对.没有理解到每一步的原因.
-- 下次出现什么信号，该想到今天这段：数据出现崩溃,格式不对时
+- **关键洞察**：要求写在文件里，不在任何人口头里。README 是合同，`tests/*.py` 是甲方验收单，函数签名是接口。今晚我每卡一次，答案都在 `test_day01.py` 或 traceback 里，**不在"再学点什么"里**。
+- **我卡在哪**（三件事要分开，混在一起就会误判成"我不行"）：
+  1. **零件不熟**——纯记忆量，一周自动解决：`read_text(encoding="utf-8")`、`json.loads`、`try/except`、`isinstance(x, list)`、`append` vs `extend`、`return`
+  2. **真 bug 三个**——`find_data_files` 少 `return`（报错却打在测试第 14 行）；`json.loads(file_path)` 把刚读出来的 `text` 晾着没接线；`skipped.append(text)` 类型对、内容错
+  3. **习惯没建立**（不是不懂）——每一步都要先问"为什么是这一步"才敢走。明天起改成：先照六步流程走，走完再回头问为什么
+- **下次出现什么信号 → 立刻做什么动作**：
+  - 报错里有 `line N column M` 或 `char N` → 去 `s[N-1]` 附近看一眼（今天 `s[60:80]` 一次就懂了什么叫"截断"）
+  - 看到 `'NoneType' object is not iterable` → 先查被调用那个函数有没有 `return`
+  - 报错里的文件路径**不在我项目里** → 是我喂进去的东西不对；顺着栈往上找第一个属于我的帧
+  - 改了代码但测试毫无变化 → 八成是没 `Ctrl+S`，磁盘上还是旧的
+  - 心里冒出"我是不是该先看个视频/文档" → 先问"是不是今晚交付必需的"，不是就推迟到它服务的那天
+- **今天暴露的毛病（不是知识缺口，是习惯）**：
+  - 我默认"先攒够知识再动手"，但今晚 6 个零件是**边写边查**才记住的
+  - 我以为计划要"从上到下执行"，其实顺序由**依赖和数据流**决定（`load_records` 的输入正好是 `find_data_files` 的输出）
+  - 我把"完全不会写"当成能力问题，其实缺的是**先写中文伪代码**这一步
+  - 我两次说"写完了 / 回答完了"，文件却是空的 → **宣称完成之前先用一条命令证明**（`git log`、`grep`、看标签页有没有 `●`）
+  - 最后一处 bug 我丢给 AI 改了 → 允许，但**AI 拿走的答案要还一次解释**（底下那 5 题）
 
 ## Day 2
 
@@ -23,8 +38,11 @@
 
 ## 我要问的 5 个问题（自己先答，答不上来的就是明天要补的）
 
-1. `p`、`p.name`、`str(p)` 三者的**类型**和**值**分别是什么？合同（测试）要的是哪一个？
-2. `find_data_files` 少了 `return` 时，报错为什么打在**测试文件**第 14 行，而不是 `report.py` 里？
-3. `try` 为什么必须写在 `for` **里面**？写在外面会出什么具体后果？
+1. `p`、`p.name`、`str(p)` 三者的**类型**和**值**分别是什么？合同（测试）要的是哪一个？Path .json文件  str 文件名  str 文件完整路径  合同要的是 `p.name`
+2. `find_data_files` 少了 `return` 时，报错为什么打在**测试文件**第 14 行，而不是 `report.py` 里？默认返回了 `None` ,测试文件运行第14行没有拿到东西
+3. `try` 为什么必须写在 `for` **里面**？写在外面会出什么具体后果？为了每个文件单独测试,写在外面就会出现一个有问题的就不管其他的了
 4. `except json.JSONDecodeError:` 接不住哪一种失败？（提示：如果 `read_text` 自己炸了）
-5. `append` 和 `extend` 差在哪？把 `records.extend(data)` 改成 `records.append(data)`，`len(records)` 会变成几？**真跑一遍再答**。
+   - `FileNotFoundError` —— 文件不存在或被删了
+   - `PermissionError` —— 没权限读
+   - `UnicodeDecodeError` —— 编码不对（比如 Windows 默认拿 GBK 去读 UTF-8 文件)
+5. `append` 和 `extend` 差在哪？把 `records.extend(data)` 改成 `records.append(data)`，`len(records)` 会变成几？append是把对象整体放入.extend是把对象的元素单独放入.变成2**真跑一遍再答**。

@@ -3,19 +3,20 @@
 规则全部写在 README.md 的「规格」一节。函数名和签名不许改，实现全部自己写。
 写之前先在纸上想清楚：这个函数拿到什么、返回什么、坏输入会走到哪条分支。
 """
+
 from __future__ import annotations
 import json
 from pathlib import Path
+from datetime import datetime
 
 
 def find_data_files(data_dir: Path) -> list[Path]:
     """返回 data_dir 下所有 .json 文件，按文件名排序。
 
     Day 1。注意：只要后缀是 .json 的都算，坏文件由 load_records 负责处理。
-    """ 
-    files = sorted(Path(data_dir).glob("*.json"))       
-    return files    
-
+    """
+    files = sorted(Path(data_dir).glob("*.json"))
+    return files
 
 
 def load_records(paths: list[Path]) -> tuple[list[dict], list[str]]:
@@ -29,24 +30,21 @@ def load_records(paths: list[Path]) -> tuple[list[dict], list[str]]:
     """
     records = []
     skipped = []
-    for file_path in paths:
-        name = file_path.name
-
+    for pile_path in paths:
+        name = pile_path.name
         try:
-            text = file_path.read_text(encoding="utf-8")
+            text = pile_path.read_text(encoding="utf-8")
             data = json.loads(text)
         except json.JSONDecodeError:
-            print(f"跳过文件 {name}: JSON解析失败")
+            print(f"JSON解析失败,跳过{name}文件")
             skipped.append(name)
             continue
-
         if not isinstance(data, list):
-            print(f"跳过文件 {name}: JSON顶层不是列表")
+            print(f"顶层不是列表,跳过{name}文件")
             skipped.append(name)
             continue
-        
         records.extend(data)
-    return records,skipped
+    return records, skipped
 
 
 def clean(records: list[dict]) -> tuple[list[dict], dict]:
@@ -56,7 +54,54 @@ def clean(records: list[dict]) -> tuple[list[dict], dict]:
     每条输出固定为：{"order_id": str, "user": str, "amount": float, "date": str | None}
     原始记录不要被就地改掉（想想为什么）。
     """
-    raise NotImplementedError
+    cleaned: list[dict] = []
+    stats = {"dropped": 0, "duplicates": 0}
+    seen_order_ids = set()
+
+    for r in records:
+        order_id = r.get("order_id")
+        if order_id is None:
+            stats["dropped"] += 1
+            continue
+        if order_id in seen_order_ids:
+            stats["duplicates"] += 1
+            continue
+
+        amount = r.get("amount")
+        if amount is None:
+            qty = r.get("qty")
+            price = r.get("price")
+            if qty is None or price is None:
+                stats["dropped"] += 1
+                continue
+            else:
+                amount = qty * price
+        try:
+            amount = float(amount)
+        except (ValueError, TypeError):
+            stats["dropped"] += 1
+            continue
+
+        date_val = None
+        created_at = r.get("created_at")  # 拿原始日期字段
+        if created_at:  # 如果它存在且不为空
+            date_str = str(created_at)[:10]  # 只取前10个字符
+            try:
+                d = datetime.strptime(date_str, "%Y-%m-%d")  # ← 真的把结果接下来
+                date_val = d.strftime("%Y-%m-%d")  # ← 从结果里格式化出字符串
+            except ValueError:
+                pass
+
+        clean_item = {
+            "order_id": str(order_id),  # 强转字符串
+            "user": r.get("user") or "unknown",  # 没有 user 就填 unknown
+            "amount": amount,
+            "date": date_val,
+        }
+        cleaned.append(clean_item)
+        seen_order_ids.add(order_id)
+
+    return cleaned, stats
 
 
 def aggregate(records: list[dict]) -> list[dict]:
@@ -64,6 +109,9 @@ def aggregate(records: list[dict]) -> list[dict]:
 
     Day 3。排序：amount 从大到小；金额相同时按 user 字母序。
     """
+    # 1. 我要一个"每个用户 → 累计了多少单、多少钱"的东西，用什么容器存？
+    # 2. 遍历清洗后的记录，每来一条，怎么把它的 orders 和 amount 累进去？
+    # 3. 最后要按金额从大到小排，还要处理"金额相同按用户名字母序"——排序的 key 怎么写？
     raise NotImplementedError
 
 
@@ -75,7 +123,9 @@ def write_csv(rows: list[dict], out_path: Path) -> Path:
     raise NotImplementedError
 
 
-def main(data_dir: Path = Path("data"), out_path: Path = Path("out/report.csv")) -> None:
+def main(
+    data_dir: Path = Path("data"), out_path: Path = Path("out/report.csv")
+) -> None:
     """把上面四个函数串起来，并打印：读到多少条、跳过哪些、丢弃/重复各几条、总额多少。
 
     Day 3。跑法：python -m src.report

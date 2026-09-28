@@ -27,13 +27,13 @@ python -m pytest tests/test_day01.py -v
 
 `data/` 里五个文件，**脏是故意的**：
 
-| 文件 | 情况 |
-|---|---|
+| 文件                    | 情况                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------ |
 | `orders_2026-06.json` | 6 条。`amount` 有字符串 `"25.00"`、有 `null`、有缺失；`user` 有 `null`；`A-1002` 重复出现两次；`A-1005` 既没 `amount` 也没 `qty` |
-| `orders_2026-07.json` | 5 条。时间格式混用（`2026-07-01 12:00` / `2026-07-03T20:15:00` / `bad-date`） |
-| `orders_2026-08.json` | 顶层是 `{"note":..., "records":[...]}`，**不是列表** |
-| `broken.json` | JSON 被截断，`json.loads` 会抛 `JSONDecodeError` |
-| `readme.txt` | 不是 json，别理它 |
+| `orders_2026-07.json` | 5 条。时间格式混用（`2026-07-01 12:00` / `2026-07-03T20:15:00` / `bad-date`）                                    |
+| `orders_2026-08.json` | 顶层是 `{"note":..., "records":[...]}`，**不是列表**                                                           |
+| `broken.json`         | JSON 被截断，`json.loads` 会抛 `JSONDecodeError`                                                             |
+| `readme.txt`          | 不是 json，别理它                                                                                            |
 
 ## 规格（这就是你要实现的全部契约）
 
@@ -48,14 +48,15 @@ python -m pytest tests/test_day01.py -v
 5. `order_id` 重复 → 保留第一条，后面的算重复并计数。
 6. `user` 为 `null` 或缺失 → `"unknown"`。
 7. `created_at` 取前 10 个字符，能按 `%Y-%m-%d` 解析就留，不能就设为 `None`。
+8. 没有 order_id 的记录 → 丢弃，计入 dropped。
 
 ## 三天怎么打
 
-| 天 | 时间 | 做什么 | 完成判定 |
-|---|---|---|---|
-| Day 1 | 40 min | `find_data_files` + `load_records`：只把记录原样读出来，坏文件跳过并打印原因 | `pytest tests/test_day01.py` 全绿 |
-| Day 2 | 40 min | `clean`：按上面 7 条规则清洗，返回 `(记录, {"dropped":n,"duplicates":n})` | `test_day02.py` 全绿 |
-| Day 3 | 60 min | `aggregate` + `write_csv` + `main`：按用户汇总、按金额降序、导出 `out/report.csv`；补类型注解和异常处理 | `test_day03.py` 全绿 + 你自己能讲清每一行 |
+| 天     | 时间     | 做什么                                                                           | 完成判定                            |
+| ----- | ------ | ----------------------------------------------------------------------------- | ------------------------------- |
+| Day 1 | 40 min | `find_data_files` + `load_records`：只把记录原样读出来，坏文件跳过并打印原因                       | `pytest tests/test_day01.py` 全绿 |
+| Day 2 | 40 min | `clean`：按上面 7 条规则清洗，返回 `(记录, {"dropped":n,"duplicates":n})`                   | `test_day02.py` 全绿              |
+| Day 3 | 60 min | `aggregate` + `write_csv` + `main`：按用户汇总、按金额降序、导出 `out/report.csv`；补类型注解和异常处理 | `test_day03.py` 全绿 + 你自己能讲清每一行  |
 
 每天结束做两件事（这两件比代码本身重要）：
 
