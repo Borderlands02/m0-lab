@@ -109,10 +109,23 @@ def aggregate(records: list[dict]) -> list[dict]:
 
     Day 3。排序：amount 从大到小；金额相同时按 user 字母序。
     """
-    # 1. 我要一个"每个用户 → 累计了多少单、多少钱"的东西，用什么容器存？
-    # 2. 遍历清洗后的记录，每来一条，怎么把它的 orders 和 amount 累进去？
-    # 3. 最后要按金额从大到小排，还要处理"金额相同按用户名字母序"——排序的 key 怎么写？
-    raise NotImplementedError
+    user_stats = {}
+    rows = []
+    for r in records:
+        user = r["user"]
+        if user not in user_stats:
+            user_stats[user] = {"orders": 0, "amount": 0.0}
+        user_stats[user]["orders"] += 1
+        user_stats[user]["amount"] += r["amount"]
+    sorted_items = sorted(
+        user_stats.items(), key=lambda item: (-item[1]["amount"], item[0])
+    )
+
+    for user, stats in sorted_items:
+        user_item = {"user": user, "orders": stats["orders"], "amount": stats["amount"]}
+        rows.append(user_item)
+
+    return rows
 
 
 def write_csv(rows: list[dict], out_path: Path) -> Path:
@@ -120,7 +133,14 @@ def write_csv(rows: list[dict], out_path: Path) -> Path:
 
     Day 3。out_path 的父目录可能不存在。
     """
-    raise NotImplementedError
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text("user,orders,amount\n", encoding="utf-8")
+    with out_path.open("a", encoding="utf-8") as f:
+        for r in rows:
+            line = f"{r['user']},{r['orders']},{r['amount']:.2f}\n"
+            f.write(line)
+
+    return out_path
 
 
 def main(
@@ -130,7 +150,18 @@ def main(
 
     Day 3。跑法：python -m src.report
     """
-    raise NotImplementedError
+    files = find_data_files(data_dir)
+    records, skipped = load_records(files)
+    cleaned, stats = clean(records)
+    rows = aggregate(cleaned)
+    final_path = write_csv(rows, out_path)
+    total_amount = sum(r["amount"] for r in rows)
+    print(f"读取记录数: {len(records)}")
+    print(f"跳过文件: {skipped}")
+    print(f"丢弃条数: {stats['dropped']}")
+    print(f"重复条数: {stats['duplicates']}")
+    print(f"总金额: {total_amount:.2f}")
+    print(f"已写出: {final_path}")
 
 
 if __name__ == "__main__":
