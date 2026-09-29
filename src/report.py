@@ -134,11 +134,9 @@ def write_csv(rows: list[dict], out_path: Path) -> Path:
     Day 3。out_path 的父目录可能不存在。
     """
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text("user,orders,amount\n", encoding="utf-8")
-    with out_path.open("a", encoding="utf-8") as f:
-        for r in rows:
-            line = f"{r['user']},{r['orders']},{r['amount']:.2f}\n"
-            f.write(line)
+    lines = ["user,orders,amount"]
+    lines += [f"{r['user']},{r['orders']},{r['amount']:.2f}" for r in rows]
+    out_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
     return out_path
 
